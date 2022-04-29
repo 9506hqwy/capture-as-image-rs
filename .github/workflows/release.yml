@@ -24,9 +24,9 @@ jobs:
         $RUST_OS=$RUST_TOOLCHAIN[3]
         $RUST_ENV=$RUST_TOOLCHAIN[4]
         $RUST_TARGET="${RUST_ARCH}-${RUST_PLAT}-${RUST_OS}-${RUST_ENV}"
-        Compress-Archive -Path 'target\release\examples\capture-as-image.exe' -DestinationPath "capture-as-image-${RUST_TARGET}.zip"
+        Compress-Archive -Path 'target\release\examples\capture-as-image.exe' -DestinationPath "capture-as-image-${env:GITHUB_REF_NAME}-${RUST_TARGET}.zip"
         Write-Output "RUST_TARGET=$RUST_TARGET" >> $env:GITHUB_ENV
-        Write-Output "ARTIFACT_PATH=capture-as-image-${RUST_TARGET}.zip" >> $env:GITHUB_ENV
+        Write-Output "ARTIFACT_PATH=capture-as-image-${env:GITHUB_REF_NAME}-${RUST_TARGET}.zip" >> $env:GITHUB_ENV
     - name: Upload Artifact
       uses: actions/upload-artifact@v3.0.0
       with:
