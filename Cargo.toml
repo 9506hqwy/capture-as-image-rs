@@ -22,9 +22,9 @@ features = [
 ]
 
 [dev-dependencies]
-clap = "*"
-env_logger = "*"
-image = "*"
+clap = "3.1.12"
+env_logger = "0.9.0"
+image = "0.24.2"
 
 [[example]]
 name = "capture-as-image"
