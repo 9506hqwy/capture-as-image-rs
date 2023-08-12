@@ -58,7 +58,7 @@ impl MemoryDeviceContext {
     pub fn copy_from(&self, hdcsrc: HDC) -> Result<(), core::Error> {
         // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt
         trace!("{}({:?})", "BitBlt", hdcsrc);
-        let _ret = unsafe {
+        unsafe {
             BitBlt(
                 self.memory,
                 0,

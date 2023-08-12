@@ -21,7 +21,7 @@ fn main() -> Result<(), Error> {
                 .short('f')
                 .long("fullscreen")
                 .help("Specify if full screen capture taking")
-                .conflicts_with_all(&["window", "list"])
+                .conflicts_with_all(["window", "list"])
                 .num_args(0),
         )
         .arg(
@@ -30,14 +30,14 @@ fn main() -> Result<(), Error> {
                 .long("window")
                 .value_name("TITLE")
                 .help("Specify target window title")
-                .conflicts_with_all(&["fullscreen", "list"]),
+                .conflicts_with_all(["fullscreen", "list"]),
         )
         .arg(
             Arg::new("desktop")
                 .short('d')
                 .long("desktop")
                 .help("Specify if desktop window taking")
-                .conflicts_with_all(&["fullscreen", "list"])
+                .conflicts_with_all(["fullscreen", "list"])
                 .num_args(0),
         )
         .arg(
@@ -45,7 +45,7 @@ fn main() -> Result<(), Error> {
                 .short('l')
                 .long("list")
                 .help("List desktop window name")
-                .conflicts_with_all(&["output", "fullscreen", "window"])
+                .conflicts_with_all(["output", "fullscreen", "window"])
                 .num_args(0),
         )
         .get_matches();
