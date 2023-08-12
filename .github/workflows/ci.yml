@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches: [ main ]
-    tags-ignore: [ '*' ]
+    tags-ignore: [ '**' ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,8 +15,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Create Artifacts
       run: cargo build --release --examples --verbose
+
+    - name: Check format
+      run: cargo fmt --all --check
+
+    - name: Check lint
+      run: |
+        cargo clippy --fix
+        git diff --exit-code --quiet
+
     - name: Create Archive
       run: |
         $RUST_TOOLCHAIN = $(rustup show active-toolchain) -Split '[ -]'
@@ -28,6 +38,7 @@ jobs:
         Compress-Archive -Path 'target\release\examples\capture-as-image.exe' -DestinationPath "capture-as-image-${RUST_TARGET}.zip"
         Write-Output "RUST_TARGET=$RUST_TARGET" >> $env:GITHUB_ENV
         Write-Output "ARTIFACT_PATH=capture-as-image-${RUST_TARGET}.zip" >> $env:GITHUB_ENV
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
