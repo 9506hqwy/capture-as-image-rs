@@ -20,12 +20,7 @@ jobs:
 
     - name: Create Archive
       run: |
-        $RUST_TOOLCHAIN = $(rustup show active-toolchain) -Split '[ -]'
-        $RUST_ARCH=$RUST_TOOLCHAIN[1]
-        $RUST_PLAT=$RUST_TOOLCHAIN[2]
-        $RUST_OS=$RUST_TOOLCHAIN[3]
-        $RUST_ENV=$RUST_TOOLCHAIN[4]
-        $RUST_TARGET="${RUST_ARCH}-${RUST_PLAT}-${RUST_OS}-${RUST_ENV}"
+        $RUST_TARGET = $(rustup show active-toolchain) -replace '[^-]*-(?<host>.*)\s.*', '${host}'
         Compress-Archive -Path 'target\release\examples\capture-as-image.exe' -DestinationPath "capture-as-image-${env:GITHUB_REF_NAME}-${RUST_TARGET}.zip"
         Write-Output "RUST_TARGET=$RUST_TARGET" >> $env:GITHUB_ENV
         Write-Output "ARTIFACT_PATH=capture-as-image-${env:GITHUB_REF_NAME}-${RUST_TARGET}.zip" >> $env:GITHUB_ENV
