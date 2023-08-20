@@ -8,12 +8,12 @@ use error::Error;
 use log::trace;
 use std::string::String;
 use windows::{
-    core::{self},
+    core::{self, HSTRING, PCWSTR},
     Win32::Foundation::{GetLastError, BOOL, HWND, LPARAM},
     Win32::System::Console::GetConsoleWindow,
     Win32::UI::WindowsAndMessaging::{
         EnumWindows, FindWindowW, GetWindowInfo, GetWindowTextLengthW, GetWindowTextW,
-        IsWindowVisible, WINDOWINFO, WINDOW_STYLE, WS_POPUP,
+        IsWindowVisible, WINDOWINFO, WS_POPUP,
     },
 };
 
@@ -39,7 +39,9 @@ fn get_console_window_handle(window_name: Option<&str>) -> Result<HWND, core::Er
         Some(name) => {
             // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-findwindoww
             trace!("{}({})", "FindWindowW", name);
-            unsafe { FindWindowW(None, name) }
+            let h_name = HSTRING::from(name);
+            let w_name = PCWSTR::from_raw(h_name.as_ptr());
+            unsafe { FindWindowW(None, w_name) }
         }
         _ => {
             // https://docs.microsoft.com/en-us/windows/console/getconsolewindow
@@ -57,7 +59,7 @@ fn get_console_window_handle(window_name: Option<&str>) -> Result<HWND, core::Er
 pub fn print_window_name() -> Result<(), core::Error> {
     // https://docs.microsoft.com/ja-jp/windows/win32/api/winuser/nf-winuser-enumwindows
     trace!("{}", "EnumWindows");
-    unsafe { EnumWindows(Some(print_window_name_proc), None).ok() }
+    unsafe { EnumWindows(Some(print_window_name_proc), None) }
 }
 
 unsafe extern "system" fn print_window_name_proc(hwnd: HWND, _: LPARAM) -> BOOL {
@@ -68,11 +70,11 @@ unsafe extern "system" fn print_window_name_proc(hwnd: HWND, _: LPARAM) -> BOOL 
 
     // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowinfo
     let mut info = WINDOWINFO::default();
-    if !GetWindowInfo(hwnd, &mut info).as_bool() {
+    if GetWindowInfo(hwnd, &mut info).is_err() {
         return true.into();
     }
 
-    if (WINDOW_STYLE(info.dwStyle) & WS_POPUP) == WS_POPUP {
+    if (info.dwStyle & WS_POPUP) == WS_POPUP {
         return true.into();
     }
 
@@ -80,7 +82,7 @@ unsafe extern "system" fn print_window_name_proc(hwnd: HWND, _: LPARAM) -> BOOL 
     let size = GetWindowTextLengthW(hwnd);
     if size == 0 {
         let err = GetLastError();
-        if err.0 == 0 {
+        if err.is_ok() {
             return true.into();
         }
 

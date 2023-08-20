@@ -7,9 +7,9 @@ use windows::{
     core::{self, IntoParam},
     Win32::Foundation::{HWND, RECT},
     Win32::Graphics::Gdi::{
-        BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, CreatedHDC, DeleteDC, DeleteObject,
-        GetDIBits, SelectObject, BITMAPFILEHEADER, BITMAPINFO, BITMAPINFOHEADER, BI_RGB,
-        CAPTUREBLT, DIB_RGB_COLORS, HBITMAP, HDC, HGDIOBJ, ROP_CODE, SRCCOPY,
+        BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDIBits,
+        SelectObject, BITMAPFILEHEADER, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, CAPTUREBLT,
+        DIB_RGB_COLORS, HBITMAP, HDC, HGDIOBJ, ROP_CODE, SRCCOPY,
     },
     Win32::UI::WindowsAndMessaging::{
         GetClientRect, GetSystemMetrics, GetWindowRect, SM_CXSCREEN, SM_CYSCREEN,
@@ -21,7 +21,7 @@ use windows::{
 pub struct MemoryDeviceContext {
     height: i32,
     width: i32,
-    memory: CreatedHDC,
+    memory: HDC,
     bitmap: HBITMAP,
     preobj: HGDIOBJ,
 }
@@ -70,7 +70,6 @@ impl MemoryDeviceContext {
                 0,
                 ROP_CODE(SRCCOPY.0 | CAPTUREBLT.0),
             )
-            .ok()
         }?;
 
         Ok(())
@@ -87,7 +86,7 @@ impl MemoryDeviceContext {
         info.bmiHeader.biPlanes = 1;
         info.bmiHeader.biBitCount = 32;
         info.bmiHeader.biSizeImage = 0;
-        info.bmiHeader.biCompression = BI_RGB as u32;
+        info.bmiHeader.biCompression = BI_RGB.0;
 
         // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-getdibits
         trace!("{}", "GetDIBits");
@@ -97,7 +96,7 @@ impl MemoryDeviceContext {
                 self.bitmap,
                 0,
                 self.height as u32,
-                buffer.as_mut_ptr() as *mut c_void,
+                Some(buffer.as_mut_ptr() as *mut c_void),
                 &mut info,
                 DIB_RGB_COLORS,
             )
@@ -150,10 +149,7 @@ impl Drop for MemoryDeviceContext {
     }
 }
 
-fn assign<'a>(
-    hdc: impl IntoParam<'a, HDC>,
-    h: impl IntoParam<'a, HGDIOBJ>,
-) -> Result<HGDIOBJ, core::Error> {
+fn assign(hdc: impl IntoParam<HDC>, h: impl IntoParam<HGDIOBJ>) -> Result<HGDIOBJ, core::Error> {
     // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-selectobject
     trace!("{}", "SelectObject");
     let obj = unsafe { SelectObject(hdc, h) };
@@ -183,11 +179,11 @@ fn get_client_rect(
     if is_desktop {
         // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowrect
         trace!("{}", "GetWindowRect");
-        unsafe { GetWindowRect(hwnd, &mut rect).ok() }
+        unsafe { GetWindowRect(hwnd.unwrap(), &mut rect) }
     } else {
         // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclientrect
         trace!("{}", "GetClientRect");
-        unsafe { GetClientRect(hwnd, &mut rect).ok() }
+        unsafe { GetClientRect(hwnd.unwrap(), &mut rect) }
     }?;
 
     Ok((rect.left, rect.top, rect.right, rect.bottom))
