@@ -21,7 +21,7 @@ features = [
 ]
 
 [dev-dependencies]
-clap = "4.3.23"
+clap = "4.4.0"
 env_logger = "0.10.0"
 image = "0.24.7"
 
