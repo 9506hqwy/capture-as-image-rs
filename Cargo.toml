@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 categories = ["command-line-utilities"]
 
 [dependencies]
-log = "0.4.20"
+log = "0.4.21"
 
 [dependencies.windows]
 version = "0.52.0"
