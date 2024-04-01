@@ -9,10 +9,10 @@ license = "MIT OR Apache-2.0"
 categories = ["command-line-utilities"]
 
 [dependencies]
-log = "0.4.20"
+log = "0.4.21"
 
 [dependencies.windows]
-version = "0.52.0"
+version = "0.54.0"
 features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
@@ -21,9 +21,9 @@ features = [
 ]
 
 [dev-dependencies]
-clap = "4.4.16"
-env_logger = "0.10.2"
-image = "0.24.8"
+clap = "4.5.4"
+env_logger = "0.11.3"
+image = "0.25.1"
 
 [[example]]
 name = "capture-as-image"
