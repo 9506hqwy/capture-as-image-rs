@@ -12,7 +12,7 @@ use windows::{
     Win32::Foundation::{GetLastError, BOOL, HWND, LPARAM},
     Win32::System::Console::GetConsoleWindow,
     Win32::UI::WindowsAndMessaging::{
-        EnumWindows, FindWindowW, GetWindowInfo, GetWindowTextLengthW, GetWindowTextW,
+        EnumWindows, FindWindowW, GetParent, GetWindowInfo, GetWindowTextLengthW, GetWindowTextW,
         IsWindowVisible, WINDOWINFO, WS_POPUP,
     },
 };
@@ -46,7 +46,18 @@ fn get_console_window_handle(window_name: Option<&str>) -> Result<HWND, core::Er
         _ => {
             // https://docs.microsoft.com/en-us/windows/console/getconsolewindow
             trace!("{}", "GetConsoleWindow");
-            unsafe { Ok(GetConsoleWindow()) }
+            let hwnd = unsafe { GetConsoleWindow() };
+
+            // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getparent
+            trace!("{}", "GetParent");
+            let phwnd = unsafe { GetParent(hwnd) };
+
+            if phwnd.is_ok() {
+                phwnd
+            } else {
+                trace!("GetParent {:?}", phwnd.err());
+                Ok(hwnd)
+            }
         }
     }
 }
