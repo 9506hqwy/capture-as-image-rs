@@ -4,7 +4,7 @@ use std::mem::size_of;
 use std::ops::Drop;
 use std::slice::from_raw_parts;
 use windows::{
-    core::{self, IntoParam},
+    core::{self, Param},
     Win32::Foundation::{HWND, RECT},
     Win32::Graphics::Gdi::{
         BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDIBits,
@@ -149,7 +149,7 @@ impl Drop for MemoryDeviceContext {
     }
 }
 
-fn assign(hdc: impl IntoParam<HDC>, h: impl IntoParam<HGDIOBJ>) -> Result<HGDIOBJ, core::Error> {
+fn assign(hdc: impl Param<HDC>, h: impl Param<HGDIOBJ>) -> Result<HGDIOBJ, core::Error> {
     // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-selectobject
     trace!("{}", "SelectObject");
     let obj = unsafe { SelectObject(hdc, h) };
