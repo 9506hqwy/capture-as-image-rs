@@ -31,6 +31,10 @@ impl DeviceContext {
         Ok(DeviceContext(hwnd, hdc, is_desktop))
     }
 
+    pub fn window(&self) -> Option<HWND> {
+        self.0
+    }
+
     pub fn handle(&self) -> HDC {
         self.1
     }

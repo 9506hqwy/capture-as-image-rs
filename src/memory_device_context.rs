@@ -1,3 +1,4 @@
+use super::get_client_rect;
 use log::trace;
 use std::ffi::c_void;
 use std::mem::size_of;
@@ -5,15 +6,11 @@ use std::ops::Drop;
 use std::slice::from_raw_parts;
 use windows::{
     core::{self, Param},
-    Win32::Foundation::{HWND, RECT},
+    Win32::Foundation::HWND,
     Win32::Graphics::Gdi::{
         BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDIBits,
         SelectObject, BITMAPFILEHEADER, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, CAPTUREBLT,
         DIB_RGB_COLORS, HBITMAP, HDC, HGDIOBJ, ROP_CODE, SRCCOPY,
-    },
-    Win32::UI::WindowsAndMessaging::{
-        GetClientRect, GetSystemMetrics, GetWindowRect, SM_CXSCREEN, SM_CYSCREEN,
-        SYSTEM_METRICS_INDEX,
     },
 };
 
@@ -68,6 +65,26 @@ impl MemoryDeviceContext {
                 hdcsrc,
                 0,
                 0,
+                ROP_CODE(SRCCOPY.0 | CAPTUREBLT.0),
+            )
+        }?;
+
+        Ok(())
+    }
+
+    pub fn clip_from(&self, hdcsrc: HDC, coordinate: (i32, i32)) -> Result<(), core::Error> {
+        // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt
+        trace!("{}({:?})", "BitBlt", hdcsrc);
+        unsafe {
+            BitBlt(
+                self.memory,
+                0,
+                0,
+                self.width,
+                self.height,
+                hdcsrc,
+                coordinate.0,
+                coordinate.1,
                 ROP_CODE(SRCCOPY.0 | CAPTUREBLT.0),
             )
         }?;
@@ -162,42 +179,6 @@ fn assign(hdc: impl Param<HDC>, h: impl Param<HGDIOBJ>) -> Result<HGDIOBJ, core:
 
 unsafe fn bytes<T: Sized>(p: &T) -> &[u8] {
     from_raw_parts((p as *const T) as *const u8, size_of::<T>())
-}
-
-fn get_client_rect(
-    hwnd: Option<HWND>,
-    is_desktop: bool,
-) -> Result<(i32, i32, i32, i32), core::Error> {
-    if hwnd.is_none() {
-        let full_x = get_system_metrics(SM_CXSCREEN)?;
-        let full_y = get_system_metrics(SM_CYSCREEN)?;
-        return Ok((0, 0, full_x, full_y));
-    }
-
-    let mut rect = RECT::default();
-
-    if is_desktop {
-        // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowrect
-        trace!("{}", "GetWindowRect");
-        unsafe { GetWindowRect(hwnd.unwrap(), &mut rect) }
-    } else {
-        // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclientrect
-        trace!("{}", "GetClientRect");
-        unsafe { GetClientRect(hwnd.unwrap(), &mut rect) }
-    }?;
-
-    Ok((rect.left, rect.top, rect.right, rect.bottom))
-}
-
-fn get_system_metrics(index: SYSTEM_METRICS_INDEX) -> Result<i32, core::Error> {
-    // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
-    trace!("{}({:?})", "GetSystemMetrics", index);
-    let ret = unsafe { GetSystemMetrics(index) };
-    if ret == 0 {
-        return Err(core::Error::from_win32());
-    }
-
-    Ok(ret)
 }
 
 fn size(window: Option<HWND>, is_desktop: bool) -> Result<(i32, i32), core::Error> {
