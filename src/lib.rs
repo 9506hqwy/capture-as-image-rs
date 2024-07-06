@@ -35,7 +35,7 @@ pub fn capture_as_image(
 }
 
 fn get_console_window_handle(window_name: Option<&str>) -> Result<HWND, core::Error> {
-    let hwnd = match window_name {
+    match window_name {
         Some(name) => {
             // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-findwindoww
             trace!("{}({})", "FindWindowW", name);
@@ -46,14 +46,9 @@ fn get_console_window_handle(window_name: Option<&str>) -> Result<HWND, core::Er
         _ => {
             // https://docs.microsoft.com/en-us/windows/console/getconsolewindow
             trace!("{}", "GetConsoleWindow");
-            unsafe { GetConsoleWindow() }
+            unsafe { Ok(GetConsoleWindow()) }
         }
-    };
-    if hwnd.0 == 0 {
-        return Err(core::Error::from_win32());
     }
-
-    Ok(hwnd)
 }
 
 pub fn print_window_name() -> Result<(), core::Error> {
