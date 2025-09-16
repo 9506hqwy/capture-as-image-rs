@@ -2,8 +2,8 @@
 name = "capture-as-image"
 version = "0.1.0"
 authors = ["9506hqwy"]
-edition = "2021"
-rust-version = "1.60"
+edition = "2024"
+rust-version = "1.85"
 repository = "https://github.com/9506hqwy/capture-as-image-rs"
 license = "MIT OR Apache-2.0"
 categories = ["command-line-utilities"]

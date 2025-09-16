@@ -8,14 +8,14 @@ use error::Error;
 use log::trace;
 use std::string::String;
 use windows::{
-    core::{self, HSTRING, PCWSTR},
-    Win32::Foundation::{GetLastError, BOOL, HWND, LPARAM, RECT},
+    Win32::Foundation::{BOOL, GetLastError, HWND, LPARAM, RECT},
     Win32::System::Console::GetConsoleWindow,
     Win32::UI::WindowsAndMessaging::{
         EnumWindows, FindWindowW, GetClientRect, GetParent, GetSystemMetrics, GetWindowInfo,
         GetWindowRect, GetWindowTextLengthW, GetWindowTextW, IsWindowVisible, SM_CXSCREEN,
         SM_CYSCREEN, SYSTEM_METRICS_INDEX, WINDOWINFO, WS_POPUP,
     },
+    core::{self, HSTRING, PCWSTR},
 };
 
 pub fn capture_as_image(
@@ -132,43 +132,45 @@ pub fn print_window_name() -> Result<(), core::Error> {
 }
 
 unsafe extern "system" fn print_window_name_proc(hwnd: HWND, _: LPARAM) -> BOOL {
-    // https://docs.microsoft.com/ja-jp/windows/win32/api/winuser/nf-winuser-iswindowvisible
-    if !IsWindowVisible(hwnd).as_bool() {
-        return true.into();
-    }
-
-    // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowinfo
-    let mut info = WINDOWINFO::default();
-    if GetWindowInfo(hwnd, &mut info).is_err() {
-        return true.into();
-    }
-
-    if (info.dwStyle & WS_POPUP) == WS_POPUP {
-        return true.into();
-    }
-
-    // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
-    let size = GetWindowTextLengthW(hwnd);
-    if size == 0 {
-        let err = GetLastError();
-        if err.is_ok() {
+    unsafe {
+        // https://docs.microsoft.com/ja-jp/windows/win32/api/winuser/nf-winuser-iswindowvisible
+        if !IsWindowVisible(hwnd).as_bool() {
             return true.into();
         }
 
-        // 「Program Manager」というWindowタイトルをもつプログラムが
-        // GetWindowInfo を実行した後の場合はエラーになる。
-        // GetWindowInfo を実行しない場合はエラーは発生しない。
-        return false.into();
+        // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowinfo
+        let mut info = WINDOWINFO::default();
+        if GetWindowInfo(hwnd, &mut info).is_err() {
+            return true.into();
+        }
+
+        if (info.dwStyle & WS_POPUP) == WS_POPUP {
+            return true.into();
+        }
+
+        // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextlengthw
+        let size = GetWindowTextLengthW(hwnd);
+        if size == 0 {
+            let err = GetLastError();
+            if err.is_ok() {
+                return true.into();
+            }
+
+            // 「Program Manager」というWindowタイトルをもつプログラムが
+            // GetWindowInfo を実行した後の場合はエラーになる。
+            // GetWindowInfo を実行しない場合はエラーは発生しない。
+            return false.into();
+        }
+
+        let mut buffer: Vec<u16> = vec![0; (size + 1) as usize];
+
+        // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextw
+        let ret = GetWindowTextW(hwnd, &mut buffer);
+        if ret == 0 {
+            return false.into();
+        }
+
+        println!("{}", String::from_utf16_lossy(&buffer[..ret as usize]));
+        true.into()
     }
-
-    let mut buffer: Vec<u16> = vec![0; (size + 1) as usize];
-
-    // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowtextw
-    let ret = GetWindowTextW(hwnd, &mut buffer);
-    if ret == 0 {
-        return false.into();
-    }
-
-    println!("{}", String::from_utf16_lossy(&buffer[..ret as usize]));
-    true.into()
 }

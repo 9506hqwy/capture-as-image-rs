@@ -5,13 +5,13 @@ use std::mem::size_of;
 use std::ops::Drop;
 use std::slice::from_raw_parts;
 use windows::{
-    core::{self, Param},
     Win32::Foundation::HWND,
     Win32::Graphics::Gdi::{
-        BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDIBits,
-        SelectObject, BITMAPFILEHEADER, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, CAPTUREBLT,
-        DIB_RGB_COLORS, HBITMAP, HDC, HGDIOBJ, ROP_CODE, SRCCOPY,
+        BI_RGB, BITMAPFILEHEADER, BITMAPINFO, BITMAPINFOHEADER, BitBlt, CAPTUREBLT,
+        CreateCompatibleBitmap, CreateCompatibleDC, DIB_RGB_COLORS, DeleteDC, DeleteObject,
+        GetDIBits, HBITMAP, HDC, HGDIOBJ, ROP_CODE, SRCCOPY, SelectObject,
     },
+    core::{self, Param},
 };
 
 #[derive(Debug)]
@@ -178,7 +178,7 @@ fn assign(hdc: impl Param<HDC>, h: impl Param<HGDIOBJ>) -> Result<HGDIOBJ, core:
 }
 
 unsafe fn bytes<T: Sized>(p: &T) -> &[u8] {
-    from_raw_parts((p as *const T) as *const u8, size_of::<T>())
+    unsafe { from_raw_parts((p as *const T) as *const u8, size_of::<T>()) }
 }
 
 fn size(window: Option<HWND>, is_desktop: bool) -> Result<(i32, i32), core::Error> {

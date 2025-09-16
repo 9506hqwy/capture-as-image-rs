@@ -2,9 +2,9 @@ use super::memory_device_context::MemoryDeviceContext;
 use log::trace;
 use std::ops::Drop;
 use windows::{
-    core::{self},
     Win32::Foundation::HWND,
-    Win32::Graphics::Gdi::{GetDC, GetWindowDC, ReleaseDC, HDC},
+    Win32::Graphics::Gdi::{GetDC, GetWindowDC, HDC, ReleaseDC},
+    core::{self},
 };
 
 #[derive(Debug)]
