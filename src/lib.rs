@@ -8,14 +8,14 @@ use error::Error;
 use log::trace;
 use std::string::String;
 use windows::{
-    Win32::Foundation::{BOOL, GetLastError, HWND, LPARAM, RECT},
+    Win32::Foundation::{GetLastError, HWND, LPARAM, RECT},
     Win32::System::Console::GetConsoleWindow,
     Win32::UI::WindowsAndMessaging::{
         EnumWindows, FindWindowW, GetClientRect, GetParent, GetSystemMetrics, GetWindowInfo,
         GetWindowRect, GetWindowTextLengthW, GetWindowTextW, IsWindowVisible, SM_CXSCREEN,
         SM_CYSCREEN, SYSTEM_METRICS_INDEX, WINDOWINFO, WS_POPUP,
     },
-    core::{self, HSTRING, PCWSTR},
+    core::{self, BOOL, HSTRING, PCWSTR},
 };
 
 pub fn capture_as_image(
@@ -119,7 +119,7 @@ fn get_system_metrics(index: SYSTEM_METRICS_INDEX) -> Result<i32, core::Error> {
     trace!("{}({:?})", "GetSystemMetrics", index);
     let ret = unsafe { GetSystemMetrics(index) };
     if ret == 0 {
-        return Err(core::Error::from_win32());
+        return Err(core::Error::from_thread());
     }
 
     Ok(ret)
@@ -128,7 +128,7 @@ fn get_system_metrics(index: SYSTEM_METRICS_INDEX) -> Result<i32, core::Error> {
 pub fn print_window_name() -> Result<(), core::Error> {
     // https://docs.microsoft.com/ja-jp/windows/win32/api/winuser/nf-winuser-enumwindows
     trace!("{}", "EnumWindows");
-    unsafe { EnumWindows(Some(print_window_name_proc), None) }
+    unsafe { EnumWindows(Some(print_window_name_proc), LPARAM::default()) }
 }
 
 unsafe extern "system" fn print_window_name_proc(hwnd: HWND, _: LPARAM) -> BOOL {

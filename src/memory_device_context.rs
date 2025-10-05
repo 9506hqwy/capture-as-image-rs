@@ -11,7 +11,7 @@ use windows::{
         CreateCompatibleBitmap, CreateCompatibleDC, DIB_RGB_COLORS, DeleteDC, DeleteObject,
         GetDIBits, HBITMAP, HDC, HGDIOBJ, ROP_CODE, SRCCOPY, SelectObject,
     },
-    core::{self, Param},
+    core,
 };
 
 #[derive(Debug)]
@@ -29,19 +29,19 @@ impl MemoryDeviceContext {
 
         // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-createcompatibledc
         trace!("{}", "CreateCompatibleDC");
-        let memory = unsafe { CreateCompatibleDC(hdc) };
+        let memory = unsafe { CreateCompatibleDC(Some(hdc)) };
         if memory.is_invalid() {
-            return Err(core::Error::from_win32());
+            return Err(core::Error::from_thread());
         }
 
         // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-createcompatiblebitmap
         trace!("{}", "CreateCompatibleBitmap");
         let bitmap = unsafe { CreateCompatibleBitmap(hdc, width, height) };
         if bitmap.is_invalid() {
-            return Err(core::Error::from_win32());
+            return Err(core::Error::from_thread());
         }
 
-        let preobj = assign(memory, bitmap)?;
+        let preobj = assign(memory, bitmap.into())?;
 
         Ok(MemoryDeviceContext {
             height,
@@ -62,7 +62,7 @@ impl MemoryDeviceContext {
                 0,
                 self.width,
                 self.height,
-                hdcsrc,
+                Some(hdcsrc),
                 0,
                 0,
                 ROP_CODE(SRCCOPY.0 | CAPTUREBLT.0),
@@ -82,7 +82,7 @@ impl MemoryDeviceContext {
                 0,
                 self.width,
                 self.height,
-                hdcsrc,
+                Some(hdcsrc),
                 coordinate.0,
                 coordinate.1,
                 ROP_CODE(SRCCOPY.0 | CAPTUREBLT.0),
@@ -119,7 +119,7 @@ impl MemoryDeviceContext {
             )
         };
         if ret == 0 {
-            return Err(core::Error::from_win32());
+            return Err(core::Error::from_thread());
         }
 
         // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapfileheader
@@ -152,7 +152,7 @@ impl Drop for MemoryDeviceContext {
 
         // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-deleteobject
         trace!("{}", "DeleteObject");
-        let ret = unsafe { DeleteObject(self.bitmap) };
+        let ret = unsafe { DeleteObject(self.bitmap.into()) };
         if !ret.as_bool() {
             panic!("DeleteObject");
         }
@@ -166,12 +166,12 @@ impl Drop for MemoryDeviceContext {
     }
 }
 
-fn assign(hdc: impl Param<HDC>, h: impl Param<HGDIOBJ>) -> Result<HGDIOBJ, core::Error> {
+fn assign(hdc: HDC, h: HGDIOBJ) -> Result<HGDIOBJ, core::Error> {
     // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-selectobject
     trace!("{}", "SelectObject");
     let obj = unsafe { SelectObject(hdc, h) };
     if obj.is_invalid() {
-        return Err(core::Error::from_win32());
+        return Err(core::Error::from_thread());
     }
 
     Ok(obj)

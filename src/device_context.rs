@@ -19,13 +19,13 @@ impl DeviceContext {
         // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdc
         let hdc = if is_desktop {
             trace!("{}", "GetWindowDC");
-            unsafe { GetWindowDC(hwnd.unwrap_or_default()) }
+            unsafe { GetWindowDC(hwnd) }
         } else {
             trace!("{}", "GetDC");
-            unsafe { GetDC(hwnd.unwrap_or_default()) }
+            unsafe { GetDC(hwnd) }
         };
         if hdc.is_invalid() {
-            return Err(core::Error::from_win32());
+            return Err(core::Error::from_thread());
         }
 
         Ok(DeviceContext(hwnd, hdc, is_desktop))
@@ -48,7 +48,7 @@ impl Drop for DeviceContext {
     fn drop(&mut self) {
         // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-releasedc
         trace!("{}", "ReleaseDC");
-        let ret = unsafe { ReleaseDC(self.0.unwrap_or_default(), self.1) };
+        let ret = unsafe { ReleaseDC(self.0, self.1) };
         if ret == 0 {
             panic!("ReleaseDC");
         }
