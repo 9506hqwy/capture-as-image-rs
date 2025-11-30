@@ -6,14 +6,16 @@ mod memory_device_context;
 use device_context::DeviceContext;
 use error::Error;
 use log::trace;
+use std::ffi::c_void;
 use std::string::String;
 use windows::{
     Win32::Foundation::{GetLastError, HWND, LPARAM, RECT},
+    Win32::Graphics::Dwm::{DWMWA_EXTENDED_FRAME_BOUNDS, DwmGetWindowAttribute},
     Win32::System::Console::GetConsoleWindow,
     Win32::UI::WindowsAndMessaging::{
         EnumWindows, FindWindowW, GetClientRect, GetParent, GetSystemMetrics, GetWindowInfo,
-        GetWindowRect, GetWindowTextLengthW, GetWindowTextW, IsWindowVisible, SM_CXSCREEN,
-        SM_CYSCREEN, SYSTEM_METRICS_INDEX, WINDOWINFO, WS_POPUP,
+        GetWindowTextLengthW, GetWindowTextW, IsWindowVisible, SM_CXSCREEN, SM_CYSCREEN,
+        SYSTEM_METRICS_INDEX, WINDOWINFO, WS_POPUP,
     },
     core::{self, BOOL, HSTRING, PCWSTR},
 };
@@ -102,14 +104,12 @@ fn get_client_rect(
     let mut rect = RECT::default();
 
     if is_desktop {
-        // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowrect
-        trace!("{}", "GetWindowRect");
-        unsafe { GetWindowRect(hwnd.unwrap(), &mut rect) }
+        rect = get_window_rect(hwnd.unwrap())?;
     } else {
         // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getclientrect
         trace!("{}", "GetClientRect");
-        unsafe { GetClientRect(hwnd.unwrap(), &mut rect) }
-    }?;
+        unsafe { GetClientRect(hwnd.unwrap(), &mut rect) }?;
+    }
 
     Ok((rect.left, rect.top, rect.right, rect.bottom))
 }
@@ -123,6 +123,23 @@ fn get_system_metrics(index: SYSTEM_METRICS_INDEX) -> Result<i32, core::Error> {
     }
 
     Ok(ret)
+}
+
+fn get_window_rect(hwnd: HWND) -> Result<RECT, core::Error> {
+    let mut rect = RECT::default();
+    let size = size_of::<RECT>() as u32;
+    // https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/nf-dwmapi-dwmgetwindowattribute
+    trace!("{}", "DwmGetWindowAttribute");
+    unsafe {
+        DwmGetWindowAttribute(
+            hwnd,
+            DWMWA_EXTENDED_FRAME_BOUNDS,
+            &mut rect as *mut _ as *mut c_void,
+            size,
+        )
+    }?;
+
+    Ok(rect)
 }
 
 pub fn print_window_name() -> Result<(), core::Error> {
