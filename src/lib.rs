@@ -24,8 +24,9 @@ pub fn capture_as_image(
     fullscreen: bool,
     window: Option<&str>,
     is_desktop: bool,
+    clipping: bool,
 ) -> Result<Vec<u8>, Error> {
-    let mut is_windows_terminal = false;
+    let mut clip_from_fullscreen = clipping;
 
     let window = if fullscreen {
         DeviceContext::fullscreen()?
@@ -42,7 +43,7 @@ pub fn capture_as_image(
                 ));
             }
 
-            is_windows_terminal = true;
+            clip_from_fullscreen = true;
             DeviceContext::get(Some(parent), is_desktop)?
         } else {
             DeviceContext::get(Some(hwnd.0), is_desktop)?
@@ -50,7 +51,7 @@ pub fn capture_as_image(
     };
 
     let screen = window.offscreen()?;
-    if is_windows_terminal {
+    if clip_from_fullscreen {
         let full = DeviceContext::fullscreen()?;
         let rect = get_client_rect(window.window(), is_desktop)?;
         screen.clip_from(full.handle(), (rect.0, rect.1))?;

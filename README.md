@@ -20,6 +20,7 @@ Usage: capture-as-image.exe [OPTIONS] --output <FILE>
 Options:
   -o, --output <FILE>   Specify output filename
   -f, --fullscreen      Specify if full screen capture taking
+  -c, --clipping        Specify if clipping from full screen
   -w, --window <TITLE>  Specify target window title
   -d, --desktop         Specify if desktop window taking
   -l, --list            List desktop window name

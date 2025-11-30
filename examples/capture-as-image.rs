@@ -25,6 +25,14 @@ fn main() -> Result<(), Error> {
                 .num_args(0),
         )
         .arg(
+            Arg::new("clipping")
+                .short('c')
+                .long("clipping")
+                .help("Specify if clipping from full screen")
+                .conflicts_with_all(["fullscreen", "list"])
+                .num_args(0),
+        )
+        .arg(
             Arg::new("window")
                 .short('w')
                 .long("window")
@@ -59,8 +67,14 @@ fn main() -> Result<(), Error> {
     let fullscreen = matches.get_flag("fullscreen");
     let window = matches.get_one::<String>("window");
     let is_desktop = matches.get_flag("desktop");
+    let is_clipping = matches.get_flag("clipping");
 
-    let bmp = capture_as_image(fullscreen, window.map(|x| x.as_str()), is_desktop)?;
+    let bmp = capture_as_image(
+        fullscreen,
+        window.map(|x| x.as_str()),
+        is_desktop,
+        is_clipping,
+    )?;
 
     let format = image::ImageFormat::from_path(output).unwrap();
     let img = image::load_from_memory_with_format(&bmp, image::ImageFormat::Bmp).unwrap();
